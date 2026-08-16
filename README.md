@@ -10,12 +10,11 @@ resources (**posts** and **comments**) on top of the **users** collection that b
 | Server | Express 4 |
 | Database | MongoDB via Mongoose 7 |
 | Auth | JWT (`jsonwebtoken`) + `bcryptjs` password hashing |
-| Docs | OpenAPI 3.0 spec rendered by Swagger UI at `/docs` |
 | Tests | `node:test` + `supertest` + `mongodb-memory-server` |
 
 ## Getting started
 
-1. Copy the env file and set a secret:
+1. Copy the env file and fill it in:
 
    ```bash
    cp .env.sample .env
@@ -28,133 +27,43 @@ resources (**posts** and **comments**) on top of the **users** collection that b
    | `JWT_SECRET` | **Required** — the app refuses to start without it |
    | `JWT_EXPIRES_IN` | Token lifetime (default `7d`) |
 
-2. Install dependencies and point `MONGO_URI` at a database — see
-   [MongoDB Atlas setup](#mongodb-atlas-setup) below, or run a local `mongod`:
+2. Install and run:
 
    ```bash
    npm install
-   npm run db:check   # confirms MONGO_URI connects before you start the server
+   npm run dev    # nodemon, reloads on change
+   npm start      # plain node
    ```
 
-3. Run:
-
-   ```bash
-   npm run dev          # nodemon against MONGO_URI, reloads on change
-   npm start            # plain node against MONGO_URI
-   npm run dev:memory   # no MongoDB install needed (data is wiped on restart)
-   ```
-
-   `dev:memory` starts a throwaway in-memory MongoDB, so you can try the endpoints
-   before setting up a real database. Use `npm run dev` once you have MongoDB
-   running locally or a MongoDB Atlas connection string in `.env`.
-
-4. Try it out at <http://localhost:5000/docs> (also `/api/documentation`, and `/` redirects
-   there). That page is Swagger UI: every endpoint with its parameters, request body,
-   response codes and a working *Try it out*. It reads [`public/openapi.json`](public/openapi.json),
-   an OpenAPI 3.0 spec that Postman and code generators can import as well.
-
-5. Run the test suite — it spins up an in-memory MongoDB, so no database setup is needed:
+3. Run the tests — they spin up an in-memory MongoDB, so no database setup is needed:
 
    ```bash
    npm test
    ```
 
-## MongoDB Atlas setup
+## MongoDB Atlas
 
-Atlas is MongoDB's hosted service — nothing to install, and it is the only option that
-works once the API is deployed (Vercel cannot reach a database on your laptop).
+The database lives on MongoDB Atlas rather than a local `mongod`.
 
-1. **Create a free cluster.** Sign up at [mongodb.com/cloud/atlas](https://www.mongodb.com/cloud/atlas),
-   create a project, then **Build a Cluster** → the **M0 Free** tier. Any region works;
-   pick the one closest to you.
-2. **Create a database user.** *Database Access* → **Add New Database User** → password
-   auth, role **Read and write to any database**. Save the password — Atlas shows it once.
-3. **Allow network access.** *Network Access* → **Add IP Address**. Use **Add Current IP
-   Address** for local development; add `0.0.0.0/0` as well if you deploy to Vercel,
-   whose functions have no fixed IP.
-4. **Copy the connection string.** Cluster → **Connect** → **Drivers** → **Node.js**.
-   You get something like:
+1. Create a free **M0** cluster at [Atlas](https://www.mongodb.com/cloud/atlas).
+2. *Database Access* → add a user with **Read and write to any database**.
+3. *Network Access* → add your IP address.
+4. Cluster → **Connect** → **Drivers** → **Node.js**, and copy the connection string into
+   `.env`. Put the database name before the `?`:
 
    ```
-   mongodb+srv://<user>:<password>@cluster0.abc12.mongodb.net/?retryWrites=true&w=majority
+   MONGO_URI=mongodb+srv://user:password@cluster0.abc12.mongodb.net/devweekends?retryWrites=true&w=majority
    ```
 
-5. **Put it in `.env`.** Replace `<password>` with the real password, and insert the
-   database name before the `?`:
+   Without `/devweekends` Mongoose writes to a database called `test`. URL-encode any
+   special characters in the password (`@` → `%40`).
 
-   ```
-   MONGO_URI=mongodb+srv://appuser:s3cret@cluster0.abc12.mongodb.net/devweekends?retryWrites=true&w=majority
-   ```
-
-   Without the `/devweekends` part Mongoose writes to a database named `test`.
-   URL-encode special characters in the password (`@` → `%40`, `#` → `%23`, `/` → `%2F`).
-
-6. **Verify, then run:**
-
-   ```bash
-   npm run db:check   # prints the host, database and collections it reached
-   npm run dev
-   ```
-
-`.env` is gitignored, so the credentials stay out of the repo — set the same variables
-in your host's dashboard when you deploy.
-
-### When `db:check` fails
-
-| Message | Cause |
-| --- | --- |
-| `Authentication failed` / `bad auth` | Wrong user or password, or an unencoded special character |
-| `IP ... is not whitelisted` | Add your IP under *Network Access* |
-| `querySrv ENOTFOUND` | Cluster hostname typo, or you are offline |
-| `Server selection timed out` | Network Access rule missing, or a firewall blocking port 27017 |
-
-## Deploying to Vercel
-
-The same codebase runs locally and on Vercel. Locally `server.js` calls `app.listen()`;
-on Vercel `api/index.js` exports a handler that Vercel invokes per request. `vercel.json`
-rewrites every path to that handler, so the Express router still owns all routing.
-
-1. **Use MongoDB Atlas.** Vercel cannot reach a database on your laptop, so a local
-   `mongodb://127.0.0.1` URI will never work in production. Follow
-   [MongoDB Atlas setup](#mongodb-atlas-setup), and make sure **Network Access** allows
-   `0.0.0.0/0` — Vercel's functions do not have fixed IPs.
-2. **Push the repo to GitHub**, then import it on [vercel.com/new](https://vercel.com/new).
-3. **Set environment variables** in Vercel (Settings → Environment Variables):
-
-   | Variable | Value |
-   | --- | --- |
-   | `MONGO_URI` | Your Atlas connection string |
-   | `JWT_SECRET` | A long random string (not the one from `.env`) |
-   | `JWT_EXPIRES_IN` | `7d` (optional) |
-
-   Do **not** set `PORT` — Vercel controls that.
-4. **Deploy.** Your API is live at `https://<project>.vercel.app/api/health`.
-
-If a deployed page answers `FUNCTION_INVOCATION_FAILED`, the function crashed while
-loading — almost always a missing environment variable, since `src/config` throws when
-`JWT_SECRET` is not set. `api/index.js` catches that and answers with the actual reason,
-so open the URL again after redeploying and read the JSON message.
-
-Notes on the serverless setup:
-
-- `src/config/db.js` caches the Mongoose connection on `global`, so a warm container
-  reuses one connection instead of opening a new one per request (which would exhaust
-  Atlas' connection limit).
-- `vercel.json` sets `MONGOMS_DISABLE_POSTINSTALL=1` so the dev-only
-  `mongodb-memory-server` does not download a MongoDB binary during the build.
-- Swagger UI's css and js live in `public/swagger/` rather than being served out of
-  `node_modules`. Vercel only bundles files it can trace from a `require`, and a path
-  resolved at runtime is not traceable — the stylesheet came back 404 in production
-  while working locally, because locally the whole `node_modules` tree is on disk.
-- `npm run dev:memory` is local-only; serverless functions are stateless and cannot
-  host an in-memory database.
+`.env` is gitignored, so the credentials never reach the repo.
 
 ## Project layout
 
 ```
-server.js               bootstrap for local dev: connect to Mongo, then listen
-api/index.js            serverless handler used by Vercel
-vercel.json             routes every request to the handler
+server.js               connects to MongoDB, then starts listening
 src/
   app.js                express app (exported separately so tests can import it)
   config/
@@ -168,13 +77,6 @@ src/
     errorHandler.js     maps errors to JSON responses
     notFound.js         JSON 404 for unmatched routes
   utils/token.js        JWT signing
-public/                 static files, served by express.static
-  docs.html             Swagger UI, served at /docs and /api/documentation
-  openapi.json          OpenAPI 3.0 spec for every endpoint
-  swagger/              Swagger UI's css and js, copied from swagger-ui-dist
-scripts/
-  check-db.js           verifies MONGO_URI connects (npm run db:check)
-  dev-memory.js         runs the API against an in-memory MongoDB
 tests/api.test.js       end-to-end tests
 ```
 
