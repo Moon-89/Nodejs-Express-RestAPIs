@@ -17,10 +17,6 @@ app.use(express.json());
 // under /api, and it never interferes with API clients.
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
-// Swagger UI's own css/js, served from the installed package instead of a CDN
-// so the docs page also works offline.
-app.use('/docs/assets', express.static(require('swagger-ui-dist').getAbsoluteFSPath()));
-
 // Both of these render public/docs.html, which points Swagger UI at /openapi.json.
 app.get(['/docs', '/api/documentation'], (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'docs.html'));

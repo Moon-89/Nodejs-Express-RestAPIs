@@ -136,6 +136,11 @@ rewrites every path to that handler, so the Express router still owns all routin
    Do **not** set `PORT` — Vercel controls that.
 4. **Deploy.** Your API is live at `https://<project>.vercel.app/api/health`.
 
+If a deployed page answers `FUNCTION_INVOCATION_FAILED`, the function crashed while
+loading — almost always a missing environment variable, since `src/config` throws when
+`JWT_SECRET` is not set. `api/index.js` catches that and answers with the actual reason,
+so open the URL again after redeploying and read the JSON message.
+
 Notes on the serverless setup:
 
 - `src/config/db.js` caches the Mongoose connection on `global`, so a warm container
@@ -143,6 +148,10 @@ Notes on the serverless setup:
   Atlas' connection limit).
 - `vercel.json` sets `MONGOMS_DISABLE_POSTINSTALL=1` so the dev-only
   `mongodb-memory-server` does not download a MongoDB binary during the build.
+- Swagger UI's css and js live in `public/swagger/` rather than being served out of
+  `node_modules`. Vercel only bundles files it can trace from a `require`, and a path
+  resolved at runtime is not traceable — the stylesheet came back 404 in production
+  while working locally, because locally the whole `node_modules` tree is on disk.
 - `npm run dev:memory` is local-only; serverless functions are stateless and cannot
   host an in-memory database.
 
@@ -171,6 +180,7 @@ public/                 frontend served at /
   login.html            log in and sign up
   docs.html             Swagger UI, served at /docs and /api/documentation
   openapi.json          OpenAPI 3.0 spec for every endpoint
+  swagger/              Swagger UI's css and js, copied from swagger-ui-dist
   app.js                token handling and the fetch wrapper
   style.css
 scripts/

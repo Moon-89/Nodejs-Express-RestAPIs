@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>API Documentation — DevWeekends</title>
 <link rel="stylesheet" href="/style.css">
-<link rel="stylesheet" href="/docs/assets/swagger-ui.css">
+<link rel="stylesheet" href="/swagger/swagger-ui.css">
 <style>
   /* Swagger UI brings its own styles; these few rules line it up with the
      rest of the site (green instead of blue, our fonts, no floating topbar). */
@@ -53,8 +53,7 @@
 <div id="swagger"></div>
 
 <script src="/app.js"></script>
-<script src="/docs/assets/swagger-ui-bundle.js"></script>
-<script src="/docs/assets/swagger-ui-standalone-preset.js"></script>
+<script src="/swagger/swagger-ui-bundle.js"></script>
 <script>
 window.ui = SwaggerUIBundle({
   url: '/openapi.json',
@@ -63,7 +62,7 @@ window.ui = SwaggerUIBundle({
   displayRequestDuration: true,
   filter: true,
   tryItOutEnabled: true,
-  presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+  presets: [SwaggerUIBundle.presets.apis],
   layout: 'BaseLayout',
 
   // if you are already logged in on the site, Authorize is filled in for you
