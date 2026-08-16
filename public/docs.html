@@ -3,54 +3,46 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>API Documentation — DevWeekends</title>
-<link rel="stylesheet" href="/style.css">
+<title>API Documentation</title>
 <link rel="stylesheet" href="/swagger/swagger-ui.css">
 <style>
-  /* Swagger UI brings its own styles; these few rules line it up with the
-     rest of the site (green instead of blue, our fonts, no floating topbar). */
+  /* Swagger UI ships its own styles; these few rules calm the default blue down
+     and give the page a plain header. */
 
-  body { background: var(--paper); }
+  body { margin: 0; background: #fafafa; }
+
+  .page-head {
+    background: #fff;
+    border-bottom: 1px solid #e4e4e4;
+    padding: 16px 22px;
+    font: 600 17px/1.4 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #1f2328;
+  }
+
+  .page-head span { color: #14634a; font-weight: 400; font-size: 14px; margin-left: 10px; }
 
   .swagger-ui .wrapper { max-width: 1100px; }
-
-  .swagger-ui .info { margin: 34px 0 22px; }
-
-  .swagger-ui .info .title,
-  .swagger-ui .opblock-tag {
-    font-family: Georgia, "Iowan Old Style", serif;
-    letter-spacing: -0.3px;
-  }
-
-  .swagger-ui .info .title small.version-stamp { background: var(--green); }
+  .swagger-ui .info { margin: 30px 0 20px; }
 
   .swagger-ui .btn.authorize,
-  .swagger-ui .btn.authorize svg { color: var(--green); fill: var(--green); }
-  .swagger-ui .btn.authorize { border-color: var(--green); }
+  .swagger-ui .btn.authorize svg { color: #14634a; fill: #14634a; }
+  .swagger-ui .btn.authorize { border-color: #14634a; }
 
-  .swagger-ui .opblock.opblock-post { border-color: var(--green); background: #f3f9f6; }
-  .swagger-ui .opblock.opblock-post .opblock-summary-method { background: var(--green); }
+  .swagger-ui .opblock.opblock-post { border-color: #14634a; background: #f3f9f6; }
+  .swagger-ui .opblock.opblock-post .opblock-summary-method { background: #14634a; }
 
-  .swagger-ui .btn.execute {
-    background: var(--green);
-    border-color: var(--green);
-  }
-
-  .swagger-ui select { font-family: inherit; }
+  .swagger-ui .btn.execute { background: #14634a; border-color: #14634a; }
 </style>
 </head>
 <body>
 
-<header class="site-head">
-  <div class="wrap">
-    <a class="brand" href="/">dev<span>weekends</span></a>
-    <nav></nav>
-  </div>
-</header>
+<div class="page-head">
+  DevWeekends API
+  <span>Express · Mongoose · MongoDB Atlas</span>
+</div>
 
 <div id="swagger"></div>
 
-<script src="/app.js"></script>
 <script src="/swagger/swagger-ui-bundle.js"></script>
 <script>
 window.ui = SwaggerUIBundle({
@@ -63,18 +55,11 @@ window.ui = SwaggerUIBundle({
   presets: [SwaggerUIBundle.presets.apis],
   layout: 'BaseLayout',
 
-  // if you are already logged in on the site, Authorize is filled in for you
-  onComplete: function () {
-    var token = getToken();
-    if (token) ui.preauthorizeApiKey('bearerAuth', token);
-  },
-
-  // logging in through "Try it out" keeps you logged in on the rest of the site
+  // keep the token from a register/login call, so the locked endpoints can be
+  // tried straight afterwards without copying it into Authorize by hand
   responseInterceptor: function (response) {
-    if (response.body && response.body.token && response.body.user) {
-      saveLogin(response.body);
+    if (response.body && response.body.token) {
       ui.preauthorizeApiKey('bearerAuth', response.body.token);
-      buildNav();
     }
     return response;
   }

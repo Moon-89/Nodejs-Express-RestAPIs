@@ -13,14 +13,17 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// The frontend at "/". Mounted before the routes so it cannot shadow anything
-// under /api, and it never interferes with API clients.
+// Serves the docs page, the OpenAPI spec and Swagger UI's own assets. Mounted
+// before the routes so it cannot shadow anything under /api.
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // Both of these render public/docs.html, which points Swagger UI at /openapi.json.
 app.get(['/docs', '/api/documentation'], (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'docs.html'));
 });
+
+// Nothing to show at the root of an API, so send visitors to the documentation.
+app.get('/', (req, res) => res.redirect('/docs'));
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', uptime: process.uptime() }));
 

@@ -10,7 +10,6 @@ resources (**posts** and **comments**) on top of the **users** collection that b
 | Server | Express 4 |
 | Database | MongoDB via Mongoose 7 |
 | Auth | JWT (`jsonwebtoken`) + `bcryptjs` password hashing |
-| Frontend | Static HTML/CSS/JS served by Express from `public/` |
 | Docs | OpenAPI 3.0 spec rendered by Swagger UI at `/docs` |
 | Tests | `node:test` + `supertest` + `mongodb-memory-server` |
 
@@ -49,15 +48,10 @@ resources (**posts** and **comments**) on top of the **users** collection that b
    before setting up a real database. Use `npm run dev` once you have MongoDB
    running locally or a MongoDB Atlas connection string in `.env`.
 
-4. Try it out:
-
-   - **In the browser** — open <http://localhost:5000/>. The server also serves a small
-     frontend for the API: sign up, write posts, comment, edit and delete your own.
-     Plain HTML, CSS and JavaScript, no build step.
-   - **API documentation** — <http://localhost:5000/docs> (also at `/api/documentation`)
-     is Swagger UI: every endpoint with its parameters, request body, response codes and
-     a working *Try it out*. It reads [`public/openapi.json`](public/openapi.json), an
-     OpenAPI 3.0 spec that Postman and code generators can import as well.
+4. Try it out at <http://localhost:5000/docs> (also `/api/documentation`, and `/` redirects
+   there). That page is Swagger UI: every endpoint with its parameters, request body,
+   response codes and a working *Try it out*. It reads [`public/openapi.json`](public/openapi.json),
+   an OpenAPI 3.0 spec that Postman and code generators can import as well.
 
 5. Run the test suite — it spins up an in-memory MongoDB, so no database setup is needed:
 
@@ -174,15 +168,10 @@ src/
     errorHandler.js     maps errors to JSON responses
     notFound.js         JSON 404 for unmatched routes
   utils/token.js        JWT signing
-public/                 frontend served at /
-  index.html            post feed, search, write form
-  post.html             single post, edit/delete, comments
-  login.html            log in and sign up
+public/                 static files, served by express.static
   docs.html             Swagger UI, served at /docs and /api/documentation
   openapi.json          OpenAPI 3.0 spec for every endpoint
   swagger/              Swagger UI's css and js, copied from swagger-ui-dist
-  app.js                token handling and the fetch wrapper
-  style.css
 scripts/
   check-db.js           verifies MONGO_URI connects (npm run db:check)
   dev-memory.js         runs the API against an in-memory MongoDB
