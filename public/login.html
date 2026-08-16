@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Log in — DevWeekends</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<header class="site-head">
+  <div class="wrap">
+    <a class="brand" href="/">dev<span>weekends</span></a>
+    <nav></nav>
+  </div>
+</header>
+
+<div class="wrap narrow">
+
+  <div class="masthead">
+    <h1 id="heading">Welcome back</h1>
+    <p id="subheading">Log in to write posts and comment.</p>
+  </div>
+
+  <p id="msg" hidden></p>
+
+  <div class="card" id="loginCard">
+    <form id="loginForm">
+      <label for="loginEmail">Email</label>
+      <input id="loginEmail" type="email" required autocomplete="email">
+
+      <label for="loginPassword">Password</label>
+      <input id="loginPassword" type="password" required autocomplete="current-password">
+
+      <button type="submit">Log in</button>
+    </form>
+    <p class="small muted" style="margin: 14px 0 0">
+      No account yet? <a href="#" id="showRegister">Create one</a>
+    </p>
+  </div>
+
+  <div class="card" id="registerCard" hidden>
+    <form id="registerForm">
+      <label for="name">Name</label>
+      <input id="name" required maxlength="60" autocomplete="name">
+
+      <label for="email">Email</label>
+      <input id="email" type="email" required autocomplete="email">
+
+      <label for="password">Password <span class="muted">— at least 6 characters</span></label>
+      <input id="password" type="password" required minlength="6" autocomplete="new-password">
+
+      <button type="submit">Create account</button>
+    </form>
+    <p class="small muted" style="margin: 14px 0 0">
+      Already have one? <a href="#" id="showLogin">Log in instead</a>
+    </p>
+  </div>
+
+  <footer>Built with Express, Mongoose and MongoDB Atlas.</footer>
+</div>
+
+<script src="/app.js"></script>
+<script>
+var msg = document.getElementById('msg');
+
+function switchTo(mode) {
+  var register = mode === 'register';
+  document.getElementById('loginCard').hidden = register;
+  document.getElementById('registerCard').hidden = !register;
+  document.getElementById('heading').textContent = register ? 'Create an account' : 'Welcome back';
+  document.getElementById('subheading').textContent = register
+    ? 'Takes a few seconds — name, email, password.'
+    : 'Log in to write posts and comment.';
+  msg.hidden = true;
+}
+
+document.getElementById('showRegister').onclick = function (e) {
+  e.preventDefault();
+  switchTo('register');
+};
+
+document.getElementById('showLogin').onclick = function (e) {
+  e.preventDefault();
+  switchTo('login');
+};
+
+document.getElementById('loginForm').onsubmit = async function (e) {
+  e.preventDefault();
+  msg.hidden = true;
+
+  try {
+    var data = await api('/auth/login', 'POST', {
+      email: document.getElementById('loginEmail').value,
+      password: document.getElementById('loginPassword').value
+    });
+  } catch (err) {
+    showError(msg, err.message);
+    return;
+  }
+
+  saveLogin(data);
+  location.href = '/';
+};
+
+document.getElementById('registerForm').onsubmit = async function (e) {
+  e.preventDefault();
+  msg.hidden = true;
+
+  try {
+    var data = await api('/auth/register', 'POST', {
+      name: document.getElementById('name').value,
+      email: document.getElementById('email').value,
+      password: document.getElementById('password').value
+    });
+  } catch (err) {
+    showError(msg, err.message);
+    return;
+  }
+
+  saveLogin(data);
+  location.href = '/';
+};
+
+// already signed in? no reason to stay on this page
+if (getToken()) location.href = '/';
+</script>
+</body>
+</html>
